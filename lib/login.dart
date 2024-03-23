@@ -4,6 +4,7 @@ import 'package:roomie/homepage.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart'; // Import Realtime Database
 
 
 class LoginScreen extends StatefulWidget {
@@ -21,6 +22,19 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _phoneController = TextEditingController();
   PhoneNumber _phoneNumber = PhoneNumber(isoCode: 'US'); // Default value
 
+  // Implement the normalization method
+  String _normalizePhoneNumber(String phoneNumber) {
+    // Example normalization for Australian numbers: +610xxxx -> +61xxxx
+    String normalizedNumber = phoneNumber.replaceAll(RegExp(r'^\+610'), '+61');
+    
+    // Further normalization can be added here if needed
+    // Normalize Italian numbers
+    if (phoneNumber.startsWith('390')) {
+      phoneNumber = '+39${phoneNumber.substring(3)}';
+    }
+    return normalizedNumber;
+  }
+
   void _toggleForm() {
     setState(() {
       isLogin = !isLogin;
@@ -30,6 +44,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      // Normalize the phone number to ensure uniqueness
+      final normalizedPhoneNumber = _normalizePhoneNumber(_mobileNumber);
 
       try {
         UserCredential userCredential;
@@ -46,16 +62,30 @@ class _LoginScreenState extends State<LoginScreen> {
             email: _email,
             password: _password,
           );
+
+          // Store user details in Realtime Database
+          final dbRef = FirebaseDatabase.instance.ref(); // Get a reference to the database
+          await dbRef.child('users/${userCredential.user!.uid}').set({
+            'email': _email,
+            'phone': _mobileNumber, // Storing the phone number
+            // Add any additional fields you may need
+          });
         }
 
         // Navigate to home page if successful
         Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomePage()));
       } catch (e) {
-        // Handle errors (e.g., user not found, wrong password)
-        print('Error: $e');
+        // Display a SnackBar with an error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Email id or password is incorrect, Please try again!'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
+
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) return 'Please enter a password.';
