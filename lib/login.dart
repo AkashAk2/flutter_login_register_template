@@ -67,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
           final dbRef = FirebaseDatabase.instance.ref(); // Get a reference to the database
           await dbRef.child('users/${userCredential.user!.uid}').set({
             'email': _email,
-            'phone': _mobileNumber, // Storing the phone number
+            'phone': normalizedPhoneNumber, // Storing the phone number
             // Add any additional fields you may need
           });
         }
