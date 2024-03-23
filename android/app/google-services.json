@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1015792581188",
+    "project_id": "roomie-529d3",
+    "storage_bucket": "roomie-529d3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1015792581188:android:5441b37cb8aa4baae55a11",
+        "android_client_info": {
+          "package_name": "com.example.roomie"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB817o7SbzOOtAHEGy-f5qDoS4YUjL-EoA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
