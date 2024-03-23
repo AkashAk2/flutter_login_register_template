@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'friends.dart';
+import 'settings.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -14,7 +15,7 @@ class _HomePageState extends State<HomePage> {
     PlaceholderWidget(title: 'Groups'),
     PlaceholderWidget(title: 'Tasks'),
     PlaceholderWidget(title: 'Activity'),
-    PlaceholderWidget(title: 'Settings'),
+    SettingsScreen(),
   ];
 
   void _onItemTapped(int index) {

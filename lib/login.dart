@@ -36,10 +36,19 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _toggleForm() {
-    setState(() {
-      isLogin = !isLogin;
-    });
-  }
+  setState(() {
+    isLogin = !isLogin;
+    // Clear password and confirmPassword fields when toggling between forms
+    _password = '';
+    _confirmPassword = '';
+    // Also, consider resetting the form state to clear any existing validation errors
+    _formKey.currentState?.reset();
+    // If using TextEditingController for the password fields, reset them as well
+    // _passwordController.clear();
+    // _confirmPasswordController.clear();
+  });
+}
+
 
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
