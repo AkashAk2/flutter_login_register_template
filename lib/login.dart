@@ -21,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String _confirmPassword = '';
   String _mobileNumber = ''; // For storing the mobile number with the country code
   final TextEditingController _phoneController = TextEditingController();
-  PhoneNumber _phoneNumber = PhoneNumber(isoCode: 'US'); // Default value
+  PhoneNumber _phoneNumber = PhoneNumber(isoCode: 'AU'); // Default value
 
   // Implement the normalization method
   String _normalizePhoneNumber(String phoneNumber) {
@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Display a SnackBar with an error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Email id or password is incorrect, Please try again!'),
+            content: Text('Please enter a valid email address or password!'),
             backgroundColor: Colors.red,
           ),
         );
@@ -266,13 +266,14 @@ Widget build(BuildContext context) {
                             ),
                             SizedBox(height: 20),
                           ],
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: _forgotPassword,
-                              child: Text('Forgot Password?'),
+                          if (isLogin)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: _forgotPassword,
+                                child: Text('Forgot Password?'),
+                              ),
                             ),
-                          ),
                           ElevatedButton(
                             onPressed: _submit,
                             child: Text(isLogin ? 'Login' : 'Register'),
