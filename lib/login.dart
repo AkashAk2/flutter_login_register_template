@@ -5,6 +5,7 @@ import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart'; // Import Realtime Database
+import 'package:google_sign_in/google_sign_in.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -94,6 +95,34 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+
+  Future<void> _signInWithGoogle() async {
+  try {
+    // Trigger the Google Sign-In flow
+    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+    // Obtain the auth details from the request
+    final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
+
+    // Create a new credential
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth?.accessToken,
+      idToken: googleAuth?.idToken,
+    );
+
+    // Once signed in, return the UserCredential
+    UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+
+    // Optional: Store additional user information in your database now
+
+    // Navigate to the home page if successful
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomePage()));
+  } catch (e) {
+    // Handle error
+    print(e); // Consider using a more user-friendly error reporting mechanism
+  }
+}
+
 
 
   String? _validatePassword(String? value) {
@@ -207,13 +236,11 @@ Widget build(BuildContext context) {
                             ),
                           ),
                           Divider(height: 40, thickness: 2, indent: 20, endIndent: 20, color: Colors.grey[300]),
-                          Text('Or sign up with', textAlign: TextAlign.center),
+                          Text('Or', textAlign: TextAlign.center),
                           SignInButton(
                             Buttons.Google,
                             text: 'Sign up with Google',
-                            onPressed: () {
-                              // Here, add your Google sign-in logic
-                            },
+                            onPressed: _signInWithGoogle,
                           ),
                           if (isLogin)
                             Padding(
