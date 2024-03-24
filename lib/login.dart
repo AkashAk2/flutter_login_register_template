@@ -85,16 +85,42 @@ class _LoginScreenState extends State<LoginScreen> {
         // Navigate to home page if successful
         Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomePage()));
       } catch (e) {
+        print(e);
+        String errorMessage = 'An unexpected error occurred. Please try again.';
+        if (e is FirebaseAuthException) {
+          
+          switch (e.code) {
+            case 'email-already-in-use':
+              errorMessage = 'Email is already registered. Try logging in or resetting your password.';
+              break;
+            case 'weak-password':
+              errorMessage = 'The password is too weak!';
+              break;
+            case 'invalid-email':
+              errorMessage = 'The email address is not valid!';
+              break;
+            case 'invalid-credential':
+              errorMessage = "Please enter a valid email address and password!";
+              break;
+            case 'too-many-requests':
+              errorMessage = "Access to this account has been temporarily disabled due to many failed login attempts. Try again later!";
+              break;
+            // Handle other auth errors
+            default:
+              break;
+          }
+      }
         // Display a SnackBar with an error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Please enter a valid email address or password!'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
           ),
         );
       }
     }
   }
+
 
   Future<void> _signInWithGoogle() async {
   try {
