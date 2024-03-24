@@ -41,6 +41,7 @@ dependencies:
   currency_picker: ^2.0.21
   intl_phone_number_input: ^0.7.4
   google_sign_in: ^6.2.1
+  shared_preferences: ^2.2.2
 
 
 dev_dependencies:

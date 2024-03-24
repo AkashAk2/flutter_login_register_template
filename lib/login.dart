@@ -6,6 +6,7 @@ import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart'; // Import Realtime Database
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:roomie/resetPassword.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -164,56 +165,10 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
-  void _forgotPassword() async {
-  // Save the form state first
-  _formKey.currentState?.save();
-
-  if (_email.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Please enter your email address."),
-        backgroundColor: Colors.red,
-      ),
-    );
-    return;
-  }
-
-  try {
-    await FirebaseAuth.instance.sendPasswordResetEmail(email: _email);
-    // Inform the user that a reset email has been sent
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Reset Password"),
-        content: Text("If your email is in our system, you'll get a reset link. Please check your inbox."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text("OK"),
-          ),
-        ],
-      ),
-    );
-  } catch (e) {
-    if (e is FirebaseAuthException && e.code == 'user-not-found') {
-      // User not found, prompt to register
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("No user found with this email address. Please register."),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } else {
-      // Other errors
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("An error occurred. Please try again."),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
+  void _forgotPassword() {
+  Navigator.of(context).push(MaterialPageRoute(builder: (context) => ResetPassword()));
 }
+
 
 
 
