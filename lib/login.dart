@@ -17,10 +17,12 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool isLogin = true; // Toggle between login and register screens
+  String _fullname = '';
   String _email = '';
   String _password = '';
   String _confirmPassword = '';
-  String _mobileNumber = ''; // For storing the mobile number with the country code
+  String _mobileNumber = ''; 
+  // For storing the mobile number with the country code
   final TextEditingController _phoneController = TextEditingController();
   PhoneNumber _phoneNumber = PhoneNumber(isoCode: 'AU'); // Default value
 
@@ -78,8 +80,11 @@ class _LoginScreenState extends State<LoginScreen> {
           final dbRef = FirebaseDatabase.instance.ref(); // Get a reference to the database
           await dbRef.child('users/${userCredential.user!.uid}').set({
             'email': _email,
-            'phone': normalizedPhoneNumber, // Storing the phone number
+            'phone': normalizedPhoneNumber,
+            'name': _fullname,
+             // Storing the phone number
             // Add any additional fields you may need
+            'uidForQR': userCredential.user!.uid, // This UID will be used for QR code generation in settings
           });
         }
 
@@ -203,6 +208,13 @@ Widget build(BuildContext context) {
                       key: _formKey,
                       child: Column(
                         children: [
+                          if (!isLogin)
+                            TextFormField(
+                              decoration: InputDecoration(labelText: 'Full Name'),
+                              onSaved: (value) {
+                              _fullname = value ?? ''; // Update _fullname with the input value
+                            },
+                            ),
                           TextFormField(
                             decoration: InputDecoration(labelText: 'Email address'),
                             onSaved: (value) {

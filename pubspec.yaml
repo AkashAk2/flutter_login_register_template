@@ -42,6 +42,7 @@ dependencies:
   intl_phone_number_input: ^0.7.4
   google_sign_in: ^6.2.1
   shared_preferences: ^2.2.2
+  qr_flutter: ^4.1.0
 
 
 dev_dependencies:

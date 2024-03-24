@@ -1,125 +1,132 @@
 import 'package:flutter/material.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-// Define a model for friends with a name and the amount owed
 class Friend {
+  String id;
   String name;
+  String phone;
   double amountOwed; // Positive if they owe you, negative if you owe them
-  Friend({required this.name, this.amountOwed = 0.0});
+  Friend({required this.id, required this.name, required this.phone, this.amountOwed = 0.0});
 }
 
 class Friends extends StatefulWidget {
   @override
-  _FriendsListState createState() => _FriendsListState();
+  _FriendsPageState createState() => _FriendsPageState();
 }
 
-class _FriendsListState extends State<Friends> {
-  List<Friend> _friends = []; // List of Friend objects
+class _FriendsPageState extends State<Friends> {
+  List<Friend> _friends = [];
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final DatabaseReference _friendsRef = FirebaseDatabase.instance.ref('friends');
 
   @override
   void initState() {
     super.initState();
+    _loadFriends();
     _checkPermissions();
   }
 
   Future<void> _checkPermissions() async {
     final status = await Permission.contacts.status;
     if (status.isDenied) {
-      _requestPermission();
+      await Permission.contacts.request();
     }
   }
 
-  Future<void> _requestPermission() async {
-    final status = await Permission.contacts.request();
-    if (status.isPermanentlyDenied) {
-      _showOpenAppSettingsDialog();
-    }
+  void _loadFriends() {
+    _friendsRef.child(_auth.currentUser!.uid).onValue.listen((event) {
+      final data = Map<String, dynamic>.from(event.snapshot.value as Map? ?? {});
+      final List<Friend> loadedFriends = data.entries.map((entry) => Friend(
+        id: entry.key,
+        name: entry.value['name'],
+        phone: entry.value['phone'],
+        amountOwed: entry.value['amountOwed'].toDouble(),
+      )).toList();
+
+      setState(() => _friends = loadedFriends);
+    });
   }
 
-  void _showOpenAppSettingsDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Permission needed'),
-        content: const Text('This app needs contact permission to function properly. Please open settings and grant permission.'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              openAppSettings();
-            },
-            child: const Text('Open settings'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
+  String _normalizePhoneNumber(String phone) {
+  // Remove all spaces, hyphens, and parentheses
+  String normalized = phone.replaceAll(RegExp(r'[\s-()]'), '');
+  // Check if the number includes a country code, add it if missing
+  // This example assumes +61 for Australia if not present
+  if (!normalized.startsWith('+')) {
+    // Assume it's an Australian number missing the country code
+    normalized = '+61' + normalized;
   }
+  return normalized;
+}
 
-  Future<void> _pickContact() async {
-    final status = await Permission.contacts.status;
-    if (status.isGranted) {
-      try {
-        final Contact? contact = await ContactsService.openDeviceContactPicker();
-        if (contact != null && contact.displayName != null) {
-          setState(() {
-            _friends.add(Friend(name: contact.displayName!)); // Add as a Friend object
-          });
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick contact: $e')),
+Future<void> _pickContact() async {
+  final PermissionStatus permissionStatus = await Permission.contacts.status;
+  if (permissionStatus.isGranted) {
+    try {
+      final Contact? contact = await ContactsService.openDeviceContactPicker();
+      if (contact != null) {
+        String phoneNumber = contact.phones!.isNotEmpty ? contact.phones!.first.value! : 'No Phone';
+        phoneNumber = _normalizePhoneNumber(phoneNumber);
+
+        final Friend newFriend = Friend(
+          id: '', // Firebase will generate this
+          name: contact.displayName ?? 'No Name',
+          phone: phoneNumber,
+          amountOwed: 0.0,
         );
+
+        // Save to Firebase
+        _saveFriend(newFriend);
       }
-    } else if (status.isPermanentlyDenied) {
-      _showOpenAppSettingsDialog();
-    } else {
-      await _requestPermission();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to pick contact: $e')));
     }
+  } else {
+    await Permission.contacts.request();
   }
+}
+
+Future<void> _saveFriend(Friend friend) async {
+  friend.phone = _normalizePhoneNumber(friend.phone); // Normalize before saving
+
+  final newFriendRef = _friendsRef.child(_auth.currentUser!.uid).push();
+  await newFriendRef.set({
+    'name': friend.name,
+    'phone': friend.phone,
+    'amountOwed': friend.amountOwed,
+  });
+  setState(() => friend.id = newFriendRef.key!);
+  _friends.add(friend);
+}
+
 
   @override
-  Widget build(BuildContext context) {
+Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Friends'),
+        title: Text('My Friends'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: Icon(Icons.add),
             onPressed: _pickContact,
-          ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // Placeholder for search functionality
-            },
           ),
         ],
       ),
       body: _friends.isEmpty
-          ? const Center(child: Text('No friends added.'))
-          : ListView.separated(
+          ? Center(child: Text('No friends added.'))
+          : ListView.builder(
               itemCount: _friends.length,
-              separatorBuilder: (context, index) => const Divider(),
               itemBuilder: (context, index) {
                 final friend = _friends[index];
                 return ListTile(
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.person), // Placeholder icon for friend images
-                  ),
+                  leading: CircleAvatar(child: Icon(Icons.person)),
                   title: Text(friend.name),
-                  subtitle: Text(
-                    friend.amountOwed >= 0
-                        ? 'Owes you: \$${friend.amountOwed.toStringAsFixed(2)}'
-                        : 'You owe: \$${(-friend.amountOwed).toStringAsFixed(2)}',
-                  ),
-                  trailing: const Icon(Icons.more_vert),
+                  subtitle: Text('Owes: \$${friend.amountOwed.toStringAsFixed(2)}'),
                   onTap: () {
-                    // Placeholder for future implementation of transactions view
+                    // Navigate to a detailed view or edit page
                   },
                 );
               },
