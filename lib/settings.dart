@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'login.dart'; // Import the login screen
 
 class SettingsScreen extends StatelessWidget {
   @override
@@ -37,11 +39,16 @@ class SettingsScreen extends StatelessWidget {
                 foregroundColor: Colors.white, // Text color
                 minimumSize: Size(150, 50),
                 shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              onPressed: () {
+              onPressed: () async {
                 // Log out logic
+                await FirebaseAuth.instance.signOut();
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                  (Route<dynamic> route) => false,
+                );
               },
               child: Text('Logout'),
             ),
