@@ -1,6 +1,6 @@
 # roomie
 
-A new Flutter project.
+A new Flutter project template that focuses on registering new users to firebase and authenticate existing users for mobile apps.
 
 ## Getting Started
 
